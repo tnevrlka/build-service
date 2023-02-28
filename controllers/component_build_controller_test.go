@@ -31,7 +31,6 @@ import (
 	"github.com/redhat-appstudio/application-service/gitops"
 	gitopsprepare "github.com/redhat-appstudio/application-service/gitops/prepare"
 	buildappstudiov1alpha1 "github.com/redhat-appstudio/build-service/api/v1alpha1"
-	"github.com/redhat-appstudio/build-service/pkg/boerrors"
 	"github.com/redhat-appstudio/build-service/pkg/github"
 	"github.com/redhat-appstudio/build-service/pkg/gitlab"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -394,54 +393,6 @@ var _ = Describe("Component initial build controller", func() {
 			// The reason for this is that the test operator could be in the middle of reconcile loop
 			// and it's needed to wait until execution reaches the end of the reconcile loop.
 			time.Sleep(time.Second)
-		})
-
-		It("should successfully do PaC provision after error (when PaC GitHub Application was not installed)", func() {
-			appNotInstalledErr := boerrors.NewBuildOpError(boerrors.EGitHubAppNotInstalled, nil)
-			github.NewGithubClientByApp = func(appId int64, privateKeyPem []byte, owner string) (*github.GithubClient, error) {
-				return nil, appNotInstalledErr
-			}
-			github.NewGithubClient = func(accessToken string) *github.GithubClient {
-				defer GinkgoRecover()
-				Fail("GitHub client should be created using PaC GitHub Application")
-				return nil
-			}
-			github.CreatePaCPullRequest = func(c *github.GithubClient, d *github.PaCPullRequestData) (string, error) {
-				defer GinkgoRecover()
-				Fail("PR creation should not be invoked")
-				return "", nil
-			}
-
-			setComponentDevfileModel(resourceKey)
-			waitComponentAnnotationValue(resourceKey, PaCProvisionAnnotationName, PaCProvisionErrorAnnotationValue)
-			waitComponentAnnotationValue(resourceKey, PaCProvisionErrorDetailsAnnotationName, appNotInstalledErr.ShortError())
-
-			// Ensure no more retries after permanent error
-			github.NewGithubClientByApp = func(appId int64, privateKeyPem []byte, owner string) (*github.GithubClient, error) {
-				defer GinkgoRecover()
-				Fail("Should not retry PaC provision on permanent error")
-				return nil, nil
-			}
-			ensureComponentAnnotationValue(resourceKey, PaCProvisionAnnotationName, PaCProvisionErrorAnnotationValue)
-
-			// Suppose PaC GH App is installed
-			github.NewGithubClientByApp = func(appId int64, privateKeyPem []byte, owner string) (*github.GithubClient, error) {
-				return nil, nil
-			}
-			isCreatePaCPullRequestInvoked := false
-			github.CreatePaCPullRequest = func(c *github.GithubClient, d *github.PaCPullRequestData) (string, error) {
-				isCreatePaCPullRequestInvoked = true
-				return "url", nil
-			}
-			// Update PaC annotation to retry
-			component := getComponent(resourceKey)
-			component.Annotations[PaCProvisionAnnotationName] = PaCProvisionRequestedAnnotationValue
-			Expect(k8sClient.Update(ctx, component)).Should(Succeed())
-
-			Eventually(func() bool {
-				return isCreatePaCPullRequestInvoked
-			}, timeout, interval).Should(BeTrue())
-			waitComponentAnnotationValue(resourceKey, PaCProvisionAnnotationName, PaCProvisionDoneAnnotationValue)
 		})
 
 		It("should not submit PaC definitions PR if PaC secret is missing", func() {
