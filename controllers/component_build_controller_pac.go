@@ -892,7 +892,6 @@ func retrievePipelineSpec(bundleUri, pipelineName string) (*tektonapi.PipelineSp
 	}
 	pipelineSpec := pipelineSpecObj.PipelineSpec()
 
-	destroyCoverage()
 	return &pipelineSpec, nil
 }
 
