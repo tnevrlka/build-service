@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"fmt"
+	"sigs.k8s.io/yaml"
 	"strings"
 	"time"
 
@@ -98,6 +99,7 @@ var _ = Describe("Component initial build controller", func() {
 
 			github.NewGithubClientByApp = func(appId int64, privateKeyPem []byte, owner string) (*github.GithubClient, error) { return nil, nil }
 			github.NewGithubClient = func(accessToken string) *github.GithubClient { return nil }
+			github.IsAppInstalledIntoRepository = func(g *github.GithubClient, owner, repository string) (bool, error) { return true, nil }
 			github.CreatePaCPullRequest = func(c *github.GithubClient, d *github.PaCPullRequestData) (string, error) { return "", nil }
 			github.SetupPaCWebhook = func(g *github.GithubClient, webhookUrl, webhookSecret, owner, repository string) error { return nil }
 			gitlab.EnsurePaCMergeRequest = func(g *gitlab.GitlabClient, d *gitlab.PaCMergeRequestData) (string, error) { return "", nil }
@@ -107,7 +109,7 @@ var _ = Describe("Component initial build controller", func() {
 			gitlab.UndoPaCMergeRequest = func(g *gitlab.GitlabClient, d *gitlab.PaCMergeRequestData) (string, error) { return "", nil }
 			gitlab.DeletePaCWebhook = func(g *gitlab.GitlabClient, projectPath, webhookUrl string) error { return nil }
 
-			createComponentForPaCBuild(resourceKey)
+			createComponentForPaCBuild(getSampleComponentData(resourceKey))
 		})
 
 		_ = AfterEach(func() {
@@ -132,7 +134,7 @@ var _ = Describe("Component initial build controller", func() {
 				}
 				Expect(d.CommitMessage).ToNot(BeEmpty())
 				Expect(d.Branch).ToNot(BeEmpty())
-				Expect(d.BaseBranch).ToNot(BeEmpty())
+				Expect(d.BaseBranch).To(Equal("main"))
 				Expect(d.PRTitle).ToNot(BeEmpty())
 				Expect(d.PRText).ToNot(BeEmpty())
 				Expect(d.AuthorName).ToNot(BeEmpty())
@@ -515,6 +517,37 @@ var _ = Describe("Component initial build controller", func() {
 
 			ensureComponentInitialBuildAnnotationState(resourceKey, false)
 		})
+
+		It("should set default branch as base branch properly when Revision is not set", func() {
+			deleteComponent(resourceKey)
+
+			sampleComponent := getSampleComponentData(resourceKey)
+			// Unset Revision so that GetDefaultBranch function is called to use the default branch
+			// set in the remote component repository
+			sampleComponent.Spec.Source.GitSource.Revision = ""
+			createComponentForPaCBuild(sampleComponent)
+
+			const repoDefaultBranch = "cool-feature"
+
+			github.GetDefaultBranch = func(*github.GithubClient, string, string) (string, error) {
+				return repoDefaultBranch, nil
+			}
+
+			github.CreatePaCPullRequest = func(c *github.GithubClient, d *github.PaCPullRequestData) (string, error) {
+				Expect(d.BaseBranch).To(Equal(repoDefaultBranch))
+				for _, file := range d.Files {
+					var prYaml v1beta1.PipelineRun
+					if err := yaml.Unmarshal(file.Content, &prYaml); err != nil {
+						return "", err
+					}
+					targetBranches := prYaml.Annotations["pipelinesascode.tekton.dev/on-target-branch"]
+					Expect(targetBranches).To(Equal(fmt.Sprintf("[%s]", repoDefaultBranch)))
+				}
+				return "url", nil
+			}
+
+			setComponentDevfileModel(resourceKey)
+		})
 	})
 
 	Context("Test Pipelines as Code build clean up", func() {
@@ -571,7 +604,7 @@ var _ = Describe("Component initial build controller", func() {
 			}
 			createSecret(pacSecretKey, pacSecretData)
 
-			createComponentForPaCBuild(resourceKey)
+			createComponentForPaCBuild(getSampleComponentData(resourceKey))
 			setComponentDevfileModel(resourceKey)
 			waitPaCFinalizerOnComponent(resourceKey)
 
@@ -613,7 +646,7 @@ var _ = Describe("Component initial build controller", func() {
 			pacSecretData := map[string]string{"github.token": "ghp_token"}
 			createSecret(pacSecretKey, pacSecretData)
 
-			createComponentForPaCBuild(resourceKey)
+			createComponentForPaCBuild(getSampleComponentData(resourceKey))
 			setComponentDevfileModel(resourceKey)
 			waitPaCFinalizerOnComponent(resourceKey)
 
@@ -686,7 +719,7 @@ var _ = Describe("Component initial build controller", func() {
 			pacSecretData := map[string]string{"github.token": "ghp_token"}
 			createSecret(pacSecretKey, pacSecretData)
 
-			createComponentForPaCBuild(resourceKey)
+			createComponentForPaCBuild(getSampleComponentData(resourceKey))
 			setComponentDevfileModel(resourceKey)
 			waitPaCFinalizerOnComponent(resourceKey)
 
