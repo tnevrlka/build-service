@@ -46,6 +46,7 @@ type ApplicationInstallation struct {
 	InstallationID int64
 }
 
+//nolint:all
 func newGithubClient(accessToken string) *GithubClient {
 	gh := &GithubClient{}
 	gh.ctx = context.Background()
