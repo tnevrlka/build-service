@@ -1,5 +1,6 @@
 comment: off
 
+# measuring code coverage of github and gitlab is not viable
 ignore:
   - "pkg/github"
   - "pkg/gitlab"
