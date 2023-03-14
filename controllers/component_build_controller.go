@@ -66,7 +66,11 @@ var (
 	pipelinesAsCodeComponentProvisionTimeMetric prometheus.Histogram
 )
 
+//nolint:all
 func initMetrics() error {
+	foo := 0
+	foo++
+
 	buckets := getProvisionTimeMetricsBuckets()
 
 	initialBuildPipelineCreationTimeMetric = prometheus.NewHistogram(prometheus.HistogramOpts{
