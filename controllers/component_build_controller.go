@@ -66,6 +66,7 @@ var (
 	pipelinesAsCodeComponentProvisionTimeMetric prometheus.Histogram
 )
 
+// test comment
 func initMetrics() error {
 	buckets := getProvisionTimeMetricsBuckets()
 
