@@ -16,3 +16,5 @@ coverage:
         threshold: 1%
         removed_code_behavior: adjust_base
         if_ci_failed: success
+      required:
+        threshold: 5%
