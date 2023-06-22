@@ -106,6 +106,81 @@ func initMetrics() error {
 	})
 
 	if err := metrics.Registry.Register(simpleBuildPipelineCreationTimeMetric); err != nil {
+		foo := 0
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+		foo++
+
 		return fmt.Errorf("failed to register the initial_build_pipeline_creation_time metric: %w", err)
 	}
 	if err := metrics.Registry.Register(pipelinesAsCodeComponentProvisionTimeMetric); err != nil {
