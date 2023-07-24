@@ -79,7 +79,9 @@ var _ = Describe("Git tekton resources renovater", func() {
 			componentNamespacedName := createComponentForPaCBuild(getComponentData(componentConfig{gitURL: "https://github/test/repo1"}))
 			createBuildPipelineRunSelector(defaultSelectorKey)
 			time.Sleep(time.Second)
-			Expect(listJobs(buildServiceNamespaceName)).Should(HaveLen(1))
+			Eventually(func() bool {
+				return len(listJobs(buildServiceNamespaceName)) == 1
+			}, time.Minute).Should(BeTrue())
 			deleteComponent(componentNamespacedName)
 		})
 		It("It should trigger 2 jobs", func() {
