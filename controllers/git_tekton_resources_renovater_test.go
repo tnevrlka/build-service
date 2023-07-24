@@ -124,7 +124,9 @@ var _ = Describe("Git tekton resources renovater", func() {
 			os.Setenv(InstallationsPerJobEnvName, "2")
 			createBuildPipelineRunSelector(defaultSelectorKey)
 			time.Sleep(time.Second)
-			Expect(listJobs(buildServiceNamespaceName)).Should(HaveLen(2))
+			Eventually(func() bool {
+				return len(listJobs(buildServiceNamespaceName)) == 2
+			}, time.Minute).Should(BeTrue())
 			deleteComponent(componentNamespacedName1)
 			deleteComponent(componentNamespacedName2)
 			deleteComponent(componentNamespacedName3)

@@ -199,7 +199,9 @@ func createComponentForPaCBuild(sampleComponentData *appstudiov1alpha1.Component
 		PaCProvisionAnnotationName: PaCProvisionRequestedAnnotationValue,
 	}
 
-	Expect(k8sClient.Create(ctx, sampleComponentData)).Should(Succeed())
+	Eventually(func() bool {
+		return k8sClient.Create(ctx, sampleComponentData) == nil
+	}, time.Minute).Should(BeTrue())
 
 	lookupKey := types.NamespacedName{
 		Name:      sampleComponentData.Name,
