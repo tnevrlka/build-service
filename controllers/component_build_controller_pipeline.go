@@ -314,10 +314,10 @@ func generatePaCPipelineRunForComponent(
 	if onPull {
 		annotations["build.appstudio.redhat.com/pull_request_number"] = "{{pull_request_number}}"
 		pipelineName = component.Name + pipelineRunOnPRSuffix
-		proposedImage = imageRepo + ":on-pr-{{revision}}"
+		proposedImage = imageRepo + ":on-pr-{{revision}}-$(context.pipelineRun.uid)"
 	} else {
 		pipelineName = component.Name + pipelineRunOnPushSuffix
-		proposedImage = imageRepo + ":{{revision}}"
+		proposedImage = imageRepo + ":{{revision}}-$(context.pipelineRun.uid)"
 	}
 
 	params := []tektonapi.Param{
